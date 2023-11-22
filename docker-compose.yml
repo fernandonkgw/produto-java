@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+
+  postgres:
+    image: postgres:13.4
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: produto
+
+networks:
+  produto_network:
