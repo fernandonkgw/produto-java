@@ -1,45 +1,32 @@
 package com.fnaka.spproduto.infrastructure.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fnaka.spproduto.ControllerTest;
 import com.fnaka.spproduto.Fixture;
-import com.fnaka.spproduto.application.Pagination;
-import com.fnaka.spproduto.application.produto.atualiza.AtualizaProdutoOutput;
-import com.fnaka.spproduto.application.produto.atualiza.AtualizaProdutoUseCase;
-import com.fnaka.spproduto.application.produto.busca.BuscaProdutoPorIdUseCase;
-import com.fnaka.spproduto.application.produto.busca.ProdutoOutput;
-import com.fnaka.spproduto.application.produto.cria.CriaProdutoUseCase;
-import com.fnaka.spproduto.application.produto.lista.ListaProdutoOutput;
-import com.fnaka.spproduto.application.produto.lista.ListaProdutosUseCase;
-import com.fnaka.spproduto.domain.exceptions.NotFoundException;
-import com.fnaka.spproduto.domain.exceptions.NotificationException;
+import com.fnaka.spproduto.IntegrationTest;
 import com.fnaka.spproduto.domain.produto.Produto;
 import com.fnaka.spproduto.domain.produto.ProdutoID;
-import com.fnaka.spproduto.domain.validation.ErrorCode;
-import com.fnaka.spproduto.domain.validation.handler.Notification;
 import com.fnaka.spproduto.infrastructure.produto.models.AtualizaProdutoRequest;
 import com.fnaka.spproduto.infrastructure.produto.models.CriaProdutoRequest;
+import com.fnaka.spproduto.infrastructure.produto.persistence.ProdutoJpa;
+import com.fnaka.spproduto.infrastructure.produto.persistence.ProdutoRepository;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-
-import java.util.List;
-import java.util.Objects;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ControllerTest(controllers = ProdutoAPI.class)
-class ProdutoAPITest {
+@IntegrationTest
+class ProdutoAPIIT {
 
     @Autowired
     private MockMvc mvc;
@@ -47,17 +34,8 @@ class ProdutoAPITest {
     @Autowired
     private ObjectMapper mapper;
 
-    @MockBean
-    private CriaProdutoUseCase criaProdutoUseCase;
-
-    @MockBean
-    private BuscaProdutoPorIdUseCase buscaProdutoPorIdUseCase;
-
-    @MockBean
-    private AtualizaProdutoUseCase atualizaProdutoUseCase;
-
-    @MockBean
-    private ListaProdutosUseCase listaProdutosUseCase;
+    @Autowired
+    private ProdutoRepository produtoRepository;
 
     @Test
     void givenBodyValido_whenCallsCria_thenReturnResponse() throws Exception {
@@ -65,7 +43,6 @@ class ProdutoAPITest {
         final var expectedNome = Fixture.nome();
         final var expectedPreco = Fixture.preco();
         final var expectedEstaAtivo = true;
-        final var expectedId = ProdutoID.from("123");
 
         final var requestBody = new CriaProdutoRequest(
                 expectedNome,
@@ -73,22 +50,31 @@ class ProdutoAPITest {
                 expectedEstaAtivo
         );
 
-        when(criaProdutoUseCase.execute(any()))
-                .thenReturn(CriaProdutoUseCase.Output.from(expectedId));
+        assertEquals(0, produtoRepository.count());
 
         // when
-        final var request = MockMvcRequestBuilders.post("/produtos")
-                .contentType(MediaType.APPLICATION_JSON)
+        final var request = post("/produtos")
+                .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(requestBody));
 
         final var response = this.mvc.perform(request)
-                .andDo(MockMvcResultHandlers.print());
+                .andDo(print());
 
         // then
-        response.andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(MockMvcResultMatchers.header().string("Location", "/produtos/" + expectedId.getValue()))
-                .andExpect(MockMvcResultMatchers.header().string("Content-Type", MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(expectedId.getValue()));
+        response.andExpect(status().isCreated())
+                .andExpect(header().string("Location", notNullValue()))
+                .andExpect(content().contentType(APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(notNullValue()));
+
+        assertEquals(1, produtoRepository.count());
+        final String id = JsonPath.read(response.andReturn().getResponse().getContentAsString(), "$.id");
+        final var produtoJpa = produtoRepository.findById(id).get();
+        assertEquals(expectedNome, produtoJpa.getNome());
+        assertEquals(expectedPreco, produtoJpa.getPreco());
+        assertEquals(expectedEstaAtivo, produtoJpa.isEstaAtivo());
+        assertNotNull(produtoJpa.getCriadoEm());
+        assertNotNull(produtoJpa.getAtualizadoEm());
+        assertNull(produtoJpa.getRemovidoEm());
     }
 
     @Test
@@ -104,21 +90,18 @@ class ProdutoAPITest {
                 expectedEstaAtivo
         );
 
-        when(criaProdutoUseCase.execute(any()))
-                .thenThrow(new NotificationException(Notification.create(ErrorCode.PRO_001)));
-
         // when
-        final var request = MockMvcRequestBuilders.post("/produtos")
-                .contentType(MediaType.APPLICATION_JSON)
+        final var request = post("/produtos")
+                .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(requestBody));
 
         final var response = this.mvc.perform(request)
-                .andDo(MockMvcResultHandlers.print());
+                .andDo(print());
 
         // then
         response.andExpect(status().isBadRequest())
                 .andExpect(header().string("Location", nullValue()))
-                .andExpect(header().string("Content-Type", MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$.errors", hasSize(1)))
                 .andExpect(jsonPath("$.errors[0].message", equalTo(expectedErrorMessage)));
     }
@@ -137,24 +120,18 @@ class ProdutoAPITest {
                 expectedEstaAtivo
         );
 
-        when(criaProdutoUseCase.execute(any()))
-                .thenThrow(new NotificationException(
-                        Notification.create(ErrorCode.PRO_001)
-                                .append(ErrorCode.PRO_005, expectedPreco))
-                );
-
         // when
-        final var request = MockMvcRequestBuilders.post("/produtos")
-                .contentType(MediaType.APPLICATION_JSON)
+        final var request = post("/produtos")
+                .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(requestBody));
 
         final var response = this.mvc.perform(request)
-                .andDo(MockMvcResultHandlers.print());
+                .andDo(print());
 
         // then
         response.andExpect(status().isBadRequest())
                 .andExpect(header().string("Location", nullValue()))
-                .andExpect(header().string("Content-Type", MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$.errors", hasSize(2)))
                 .andExpect(jsonPath("$.errors[0].message", equalTo(expectedErrorMessage1)))
                 .andExpect(jsonPath("$.errors[1].message", equalTo(expectedErrorMessage2)));
@@ -168,21 +145,21 @@ class ProdutoAPITest {
         final var expectedEstaAtivo = true;
 
         final var produto = Produto.newProduto(expectedNome, expectedPreco, expectedEstaAtivo);
+        assertEquals(0, produtoRepository.count());
+        produtoRepository.saveAndFlush(ProdutoJpa.from(produto));
+        assertEquals(1, produtoRepository.count());
         final var expectedId = produto.getId();
 
-        when(buscaProdutoPorIdUseCase.execute(any()))
-                .thenReturn(ProdutoOutput.from(produto));
-
         // when
-        final var request = MockMvcRequestBuilders.get("/produtos/{id}", expectedId.getValue())
-                .accept(MediaType.APPLICATION_JSON);
+        final var request = get("/produtos/{id}", expectedId.getValue())
+                .accept(APPLICATION_JSON);
 
         final var response = this.mvc.perform(request)
-                .andDo(MockMvcResultHandlers.print());
+                .andDo(print());
 
         // then
         response.andExpect(status().isOk())
-                .andExpect(header().string("Content-Type", MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$.id", equalTo(expectedId.getValue())))
                 .andExpect(jsonPath("$.nome", equalTo(expectedNome)))
                 .andExpect(jsonPath("$.preco", equalTo(expectedPreco)))
@@ -197,15 +174,14 @@ class ProdutoAPITest {
         final var expectedErrorMessage = "Produto com ID 123 nao encontrado";
         final var expectedId = ProdutoID.from("123");
 
-        when(buscaProdutoPorIdUseCase.execute(any()))
-                .thenThrow(NotFoundException.with(Produto.class, expectedId));
+        assertEquals(0, produtoRepository.count());
 
         // when
-        final var request = MockMvcRequestBuilders.get("/produtos/{id}", expectedId.getValue())
-                .accept(MediaType.APPLICATION_JSON);
+        final var request = get("/produtos/{id}", expectedId.getValue())
+                .accept(APPLICATION_JSON);
 
         final var response = this.mvc.perform(request)
-                .andDo(MockMvcResultHandlers.print());
+                .andDo(print());
 
         // then
         response.andExpect(status().isNotFound())
@@ -219,7 +195,10 @@ class ProdutoAPITest {
         final var expectedNome = Fixture.nome();
         final var expectedPreco = Fixture.preco();
         final var expectedEstaAtivo = true;
-        final var produto = Produto.newProduto(expectedNome, expectedPreco, expectedEstaAtivo);
+        final var produto = Produto.newProduto("abcd", 10, false);
+        assertEquals(0, produtoRepository.count());
+        produtoRepository.saveAndFlush(ProdutoJpa.from(produto));
+        assertEquals(1, produtoRepository.count());
         final var expectedId = produto.getId();
 
         final var requestBody = new AtualizaProdutoRequest(
@@ -228,37 +207,37 @@ class ProdutoAPITest {
                 expectedEstaAtivo
         );
 
-        when(atualizaProdutoUseCase.execute(any()))
-                .thenReturn(AtualizaProdutoOutput.from(expectedId));
-
         // when
         final var request = MockMvcRequestBuilders.put("/produtos/{id}", expectedId.getValue())
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(requestBody));
 
         final var response = this.mvc.perform(request)
-                .andDo(MockMvcResultHandlers.print());
+                .andDo(print());
 
         // then
         response.andExpect(status().isOk())
-                .andExpect(header().string("Content-Type", MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$.id", equalTo(expectedId.getValue())));
 
-        verify(atualizaProdutoUseCase).execute(argThat(input ->
-                Objects.equals(expectedId.getValue(), input.id())
-                && Objects.equals(expectedNome, input.nome())
-                && Objects.equals(expectedPreco, input.preco())
-                && Objects.equals(expectedEstaAtivo, input.estaAtivo())
-        ));
+        final var produtoJpa = produtoRepository.findById(expectedId.getValue()).get();
+        assertEquals(expectedNome, produtoJpa.getNome());
+        assertEquals(expectedPreco, produtoJpa.getPreco());
+        assertEquals(expectedEstaAtivo, produtoJpa.isEstaAtivo());
+        assertEquals(produto.getCriadoEm(), produtoJpa.getCriadoEm());
+        assertTrue(produto.getAtualizadoEm().isBefore(produtoJpa.getAtualizadoEm()));
+        assertNull(produtoJpa.getRemovidoEm());
     }
 
     @Test
     void givenNomeInvalido_whenCallsAtualizaPorId_thenReturnNotification() throws Exception {
         // given
-        final var expectedNome = Fixture.nome();
         final var expectedPreco = Fixture.preco();
         final var expectedEstaAtivo = true;
-        final var produto = Produto.newProduto(expectedNome, expectedPreco, expectedEstaAtivo);
+        final var produto = Produto.newProduto(Fixture.nome(), expectedPreco, expectedEstaAtivo);
+        assertEquals(0, produtoRepository.count());
+        produtoRepository.saveAndFlush(ProdutoJpa.from(produto));
+        assertEquals(1, produtoRepository.count());
         final var expectedId = produto.getId();
         final var expectedErrorMessage = "'nome' nao deve ser nulo";
 
@@ -268,20 +247,17 @@ class ProdutoAPITest {
                 expectedEstaAtivo
         );
 
-        when(atualizaProdutoUseCase.execute(any()))
-                .thenThrow(new NotificationException(Notification.create(ErrorCode.PRO_001)));
-
         // when
         final var request = MockMvcRequestBuilders.put("/produtos/{id}", expectedId.getValue())
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(requestBody));
 
         final var response = this.mvc.perform(request)
-                .andDo(MockMvcResultHandlers.print());
+                .andDo(print());
 
         // then
         response.andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$.errors", hasSize(1)))
                 .andExpect(jsonPath("$.errors[0].message", equalTo(expectedErrorMessage)));
     }
@@ -289,7 +265,10 @@ class ProdutoAPITest {
     @Test
     void givenParamValidos_whenCallsLista_thenReturnPagination() throws Exception {
         // given
-        final var produto = Produto.newProduto(Fixture.nome(), Fixture.preco(), true);
+        final var produto = Produto.newProduto("alguma coisa", Fixture.preco(), true);
+        assertEquals(0, produtoRepository.count());
+        produtoRepository.saveAndFlush(ProdutoJpa.from(produto));
+        assertEquals(1, produtoRepository.count());
 
         final var expectedPage = 0;
         final var expectedPerPage = 10;
@@ -300,26 +279,21 @@ class ProdutoAPITest {
         final var expectedItemsCount = 1;
         final var expectedTotal = 1;
 
-        final var expectedItems = List.of(ListaProdutoOutput.from(produto));
-
-        when(listaProdutosUseCase.execute(any()))
-                .thenReturn(new Pagination<>(expectedPage, expectedPerPage, expectedItemsCount, expectedItems));
-
         // when
-        final var request = MockMvcRequestBuilders.get("/produtos")
+        final var request = get("/produtos")
                 .param("page", String.valueOf(expectedPage))
                 .param("perPage", String.valueOf(expectedPerPage))
                 .param("termo", expectedTermo)
                 .param("sort", expectedSort)
                 .param("direction", expectedDirection)
-                .accept(MediaType.APPLICATION_JSON);
+                .accept(APPLICATION_JSON);
 
         final var response = this.mvc.perform(request)
-                .andDo(MockMvcResultHandlers.print());
+                .andDo(print());
 
         // then
         response.andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$.page", equalTo(expectedPage)))
                 .andExpect(jsonPath("$.perPage", equalTo(expectedPerPage)))
                 .andExpect(jsonPath("$.total", equalTo(expectedTotal)))

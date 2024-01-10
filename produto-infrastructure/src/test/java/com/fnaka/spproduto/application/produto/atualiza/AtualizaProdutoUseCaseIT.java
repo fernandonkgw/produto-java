@@ -121,7 +121,7 @@ class AtualizaProdutoUseCaseIT {
 
         // then
         assertNotNull(actualException);
-        assertEquals(expectedErrorMessage, actualException.getMessage());
+        assertEquals(expectedErrorMessage, actualException.getErrors().get(0).message());
 
         verify(produtoGateway).buscaPorId(any());
         verify(produtoGateway, never()).atualiza(any());

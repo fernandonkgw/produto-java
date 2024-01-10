@@ -21,7 +21,7 @@ public record ProdutoOutput(
                 produto.isEstaAtivo(),
                 produto.getCriadoEm(),
                 produto.getAtualizadoEm(),
-                produto.getRemovidoEm()
+                produto.getRemovidoEm().orElse(null)
         );
     }
 }

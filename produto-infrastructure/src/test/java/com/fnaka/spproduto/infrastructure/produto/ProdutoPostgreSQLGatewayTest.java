@@ -47,7 +47,7 @@ class ProdutoPostgreSQLGatewayTest {
         assertEquals(expectedEstaAtivo, actualProduto.isEstaAtivo());
         assertNotNull(actualProduto.getCriadoEm());
         assertNotNull(actualProduto.getAtualizadoEm());
-        assertNull(actualProduto.getRemovidoEm());
+        assertTrue(actualProduto.getRemovidoEm().isEmpty());
 
         final var produtoJpa = repository.findById(expectedId.getValue()).get();
         assertEquals(expectedId.getValue(), produtoJpa.getId());
@@ -73,7 +73,7 @@ class ProdutoPostgreSQLGatewayTest {
         repository.saveAndFlush(ProdutoJpa.from(produto));
         assertEquals(1, repository.count());
 
-        final var produtoAtualizado = produto.copy()
+        final var produtoAtualizado = produto.clone()
                 .atualiza(expectedNome, expectedPreco, expectedEstaAtivo);
 
         // when
@@ -97,7 +97,7 @@ class ProdutoPostgreSQLGatewayTest {
         assertEquals(expectedEstaAtivo, produtoJpa.isEstaAtivo());
         assertEquals(actualProduto.getCriadoEm(), produtoJpa.getCriadoEm());
         assertEquals(actualProduto.getAtualizadoEm(), produtoJpa.getAtualizadoEm());
-        assertEquals(actualProduto.getRemovidoEm(), produtoJpa.getRemovidoEm());
+        assertEquals(actualProduto.getRemovidoEm().get(), produtoJpa.getRemovidoEm());
     }
 
     @Test

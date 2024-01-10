@@ -1,12 +1,14 @@
 package com.fnaka.spproduto.domain.produto;
 
 import com.fnaka.spproduto.domain.AggregateRoot;
+import com.fnaka.spproduto.domain.Prototype;
 import com.fnaka.spproduto.domain.utils.InstantUtils;
 import com.fnaka.spproduto.domain.validation.ValidationHandler;
 
 import java.time.Instant;
+import java.util.Optional;
 
-public class Produto extends AggregateRoot<ProdutoID> {
+public class Produto extends AggregateRoot<ProdutoID> implements Prototype<Produto> {
 
     private String nome;
     private Integer preco;
@@ -33,6 +35,16 @@ public class Produto extends AggregateRoot<ProdutoID> {
         this.removidoEm = removidoEm;
     }
 
+    private Produto(final Produto produto) {
+        super(produto.getId());
+        this.nome = produto.getNome();
+        this.preco = produto.getPreco();
+        this.estaAtivo = produto.isEstaAtivo();
+        this.criadoEm = produto.getCriadoEm();
+        this.atualizadoEm = produto.getAtualizadoEm();
+        this.removidoEm = produto.getRemovidoEm().orElse(null);
+    }
+
     public static Produto newProduto(
             final String nome,
             final Integer preco,
@@ -54,18 +66,6 @@ public class Produto extends AggregateRoot<ProdutoID> {
             final Instant removidoEm
     ) {
         return new Produto(id, nome, preco, estaAtivo, criadoEm, atualizadoEm, removidoEm);
-    }
-
-    public Produto copy() {
-        return new Produto(
-                getId(),
-                getNome(),
-                getPreco(),
-                isEstaAtivo(),
-                getCriadoEm(),
-                getAtualizadoEm(),
-                getRemovidoEm()
-        );
     }
 
     @Override
@@ -107,7 +107,12 @@ public class Produto extends AggregateRoot<ProdutoID> {
         return atualizadoEm;
     }
 
-    public Instant getRemovidoEm() {
-        return removidoEm;
+    public Optional<Instant> getRemovidoEm() {
+        return Optional.ofNullable(removidoEm);
+    }
+
+    @Override
+    public Produto clone() {
+        return new Produto(this);
     }
 }

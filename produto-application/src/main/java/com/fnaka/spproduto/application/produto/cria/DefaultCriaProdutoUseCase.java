@@ -14,7 +14,7 @@ public class DefaultCriaProdutoUseCase extends CriaProdutoUseCase {
     }
 
     @Override
-    public CriaProdutoOutput execute(final CriaProdutoInput input) {
+    public CriaProdutoUseCase.Output execute(final CriaProdutoUseCase.Input input) {
         final var nome = input.nome();
         final var preco = input.preco();
         final var estaAtivo = input.estaAtivo();
@@ -28,6 +28,6 @@ public class DefaultCriaProdutoUseCase extends CriaProdutoUseCase {
             throw new NotificationException("Nao foi possivel criar o agregado Produto", notification);
         }
 
-        return CriaProdutoOutput.from(this.produtoGateway.cria(produto));
+        return CriaProdutoUseCase.Output.from(this.produtoGateway.cria(produto));
     }
 }

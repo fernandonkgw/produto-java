@@ -24,7 +24,7 @@ class ProdutoTest {
         Assertions.assertNotNull(actualProduto.getCriadoEm());
         Assertions.assertNotNull(actualProduto.getAtualizadoEm());
         Assertions.assertEquals(actualProduto.getCriadoEm(), actualProduto.getAtualizadoEm());
-        Assertions.assertNull(actualProduto.getRemovidoEm());
+        Assertions.assertTrue(actualProduto.getRemovidoEm().isEmpty());
     }
 
     @Test
@@ -47,7 +47,7 @@ class ProdutoTest {
         Assertions.assertNotNull(actualProduto.getAtualizadoEm());
         Assertions.assertEquals(actualProduto.getCriadoEm(), actualProduto.getAtualizadoEm());
         Assertions.assertNotNull(actualProduto.getRemovidoEm());
-        Assertions.assertEquals(actualProduto.getCriadoEm(), actualProduto.getRemovidoEm());
+        Assertions.assertEquals(actualProduto.getCriadoEm(), actualProduto.getRemovidoEm().get());
     }
 
     @Test
@@ -71,7 +71,7 @@ class ProdutoTest {
         Assertions.assertEquals(expectedEstaAtivo, actualProduto.isEstaAtivo());
         Assertions.assertEquals(criadoEm, actualProduto.getCriadoEm());
         Assertions.assertTrue(atualizadoEm.isBefore(actualProduto.getAtualizadoEm()));
-        Assertions.assertNull(actualProduto.getRemovidoEm());
+        Assertions.assertTrue(actualProduto.getRemovidoEm().isEmpty());
     }
 
     @Test
@@ -96,6 +96,6 @@ class ProdutoTest {
         Assertions.assertEquals(criadoEm, actualProduto.getCriadoEm());
         Assertions.assertTrue(atualizadoEm.isBefore(actualProduto.getAtualizadoEm()));
         Assertions.assertNotNull(actualProduto.getRemovidoEm());
-        Assertions.assertEquals(actualProduto.getAtualizadoEm(), actualProduto.getRemovidoEm());
+        Assertions.assertEquals(actualProduto.getAtualizadoEm(), actualProduto.getRemovidoEm().get());
     }
 }

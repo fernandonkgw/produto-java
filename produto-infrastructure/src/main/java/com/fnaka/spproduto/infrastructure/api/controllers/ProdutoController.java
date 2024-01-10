@@ -4,7 +4,6 @@ import com.fnaka.spproduto.application.Pagination;
 import com.fnaka.spproduto.application.produto.atualiza.AtualizaProdutoInput;
 import com.fnaka.spproduto.application.produto.atualiza.AtualizaProdutoUseCase;
 import com.fnaka.spproduto.application.produto.busca.BuscaProdutoPorIdUseCase;
-import com.fnaka.spproduto.application.produto.cria.CriaProdutoInput;
 import com.fnaka.spproduto.application.produto.cria.CriaProdutoUseCase;
 import com.fnaka.spproduto.application.produto.lista.ListaProdutosUseCase;
 import com.fnaka.spproduto.application.produto.lista.ProdutoSearchQuery;
@@ -38,7 +37,7 @@ public class ProdutoController implements ProdutoAPI {
 
     @Override
     public ResponseEntity<?> cria(final CriaProdutoRequest body) {
-        final var input = CriaProdutoInput.with(
+        final var input = CriaProdutoUseCase.Input.with(
                 body.nome(),
                 body.preco(),
                 body.estaAtivo()

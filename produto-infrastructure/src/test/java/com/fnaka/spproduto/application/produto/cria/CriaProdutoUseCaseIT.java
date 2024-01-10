@@ -33,7 +33,7 @@ class CriaProdutoUseCaseIT {
         final var expectedPreco = Fixture.preco();
         final var expectedEstaAtivo = true;
 
-        final var input = CriaProdutoInput.with(
+        final var input = CriaProdutoUseCase.Input.with(
                 expectedNome,
                 expectedPreco,
                 expectedEstaAtivo
@@ -65,7 +65,7 @@ class CriaProdutoUseCaseIT {
         final var expectedErrorCount = 1;
         final var expectedErrorMessage = "'nome' nao deve ser nulo";
 
-        final var input = CriaProdutoInput.with(
+        final var input = CriaProdutoUseCase.Input.with(
                 null,
                 expectedPreco,
                 expectedEstaAtivo

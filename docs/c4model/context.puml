@@ -1,0 +1,11 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title "System Context diagram for Produto System"
+Person(client, "Cliente", "Cliente de Produto System")
+System(produto, "Produto System", "Sistema de gerenciamento de produtos")
+
+Rel(client, produto, "Utiliza", "HTTPS")
+
+
+@enduml

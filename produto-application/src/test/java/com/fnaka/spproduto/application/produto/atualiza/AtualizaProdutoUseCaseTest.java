@@ -7,6 +7,7 @@ import com.fnaka.spproduto.domain.exceptions.NotificationException;
 import com.fnaka.spproduto.domain.produto.Produto;
 import com.fnaka.spproduto.application.produto.ProdutoGateway;
 import com.fnaka.spproduto.domain.produto.ProdutoID;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 
@@ -49,7 +50,7 @@ class AtualizaProdutoUseCaseTest extends UseCaseTest {
         );
 
         when(produtoGateway.buscaPorId(any()))
-                .thenReturn(Optional.of(produto.copy()));
+                .thenReturn(Optional.of(produto.clone()));
 
         when(produtoGateway.atualiza(any()))
                 .thenAnswer(returnsFirstArg());
@@ -63,16 +64,16 @@ class AtualizaProdutoUseCaseTest extends UseCaseTest {
 
         verify(produtoGateway).buscaPorId(eq(expectedId));
 
-        verify(produtoGateway).atualiza(argThat(produtoAtualizado ->
-                Objects.equals(expectedId, produtoAtualizado.getId())
-                        && Objects.equals(expectedNome, produtoAtualizado.getNome())
-                        && Objects.equals(expectedPreco, produtoAtualizado.getPreco())
-                        && Objects.equals(expectedEstaAtivo, produtoAtualizado.isEstaAtivo())
-                        && Objects.equals(produto.getCriadoEm(), produtoAtualizado.getCriadoEm())
-                        && produto.getAtualizadoEm().isBefore(produtoAtualizado.getAtualizadoEm())
-                        && Objects.isNull(produtoAtualizado.getRemovidoEm())
-                ));
-
+        final var produtoCaptor = ArgumentCaptor.forClass(Produto.class);
+        verify(produtoGateway).atualiza(produtoCaptor.capture());
+        final var produtoCaptured = produtoCaptor.getValue();
+        Assertions.assertEquals(expectedId, produtoCaptured.getId());
+        Assertions.assertEquals(expectedNome, produtoCaptured.getNome());
+        Assertions.assertEquals(expectedPreco, produtoCaptured.getPreco());
+        Assertions.assertEquals(expectedEstaAtivo, produtoCaptured.isEstaAtivo());
+        Assertions.assertEquals(produto.getCriadoEm(), produtoCaptured.getCriadoEm());
+        Assertions.assertTrue(produto.getAtualizadoEm().isBefore(produtoCaptured.getAtualizadoEm()));
+        Assertions.assertTrue(produtoCaptured.getRemovidoEm().isEmpty());
     }
 
     @Test
@@ -91,7 +92,7 @@ class AtualizaProdutoUseCaseTest extends UseCaseTest {
         );
 
         when(produtoGateway.buscaPorId(any()))
-                .thenReturn(Optional.of(produto.copy()));
+                .thenReturn(Optional.of(produto.clone()));
 
 
         // when

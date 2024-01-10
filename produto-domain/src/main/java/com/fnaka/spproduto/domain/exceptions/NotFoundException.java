@@ -21,10 +21,6 @@ public class NotFoundException extends DomainException {
             final Class<? extends AggregateRoot> agregado,
             final Identifier id
     ) {
-//        final var anError = "%s com ID %s nao encontrado".formatted(
-//                agregado.getSimpleName(),
-//                id.getValue()
-//        );
         final var domainError = DomainError.with(ErrorCode.PRO_006, agregado.getSimpleName(), id.getValue());
         return new NotFoundException("", List.of(domainError));
     }
