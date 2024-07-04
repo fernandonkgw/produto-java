@@ -4,10 +4,10 @@ import com.fnaka.spproduto.application.UseCase;
 import com.fnaka.spproduto.domain.produto.Produto;
 import com.fnaka.spproduto.domain.produto.ProdutoID;
 
-public abstract class CriaProdutoUseCase
+public interface CriaProdutoUseCase
         extends UseCase<CriaProdutoUseCase.Input, CriaProdutoUseCase.Output> {
 
-    public record Input(
+    record Input(
             String nome,
             Integer preco,
             boolean estaAtivo
@@ -26,7 +26,7 @@ public abstract class CriaProdutoUseCase
         }
     }
 
-    public record Output(String id) {
+    record Output(String id) {
         public static CriaProdutoUseCase.Output from(final ProdutoID produtoID) {
             return new CriaProdutoUseCase.Output(produtoID.getValue());
         }

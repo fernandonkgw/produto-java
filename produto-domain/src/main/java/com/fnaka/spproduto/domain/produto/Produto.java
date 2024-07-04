@@ -8,7 +8,7 @@ import com.fnaka.spproduto.domain.validation.ValidationHandler;
 import java.time.Instant;
 import java.util.Optional;
 
-public class Produto extends AggregateRoot<ProdutoID> implements Prototype<Produto> {
+public class Produto extends AggregateRoot<ProdutoID> implements Prototype {
 
     private String nome;
     private Integer preco;
@@ -84,6 +84,14 @@ public class Produto extends AggregateRoot<ProdutoID> implements Prototype<Produ
         final var agora = InstantUtils.now();
         this.atualizadoEm = agora;
         this.removidoEm = estaAtivo ? null : agora;
+        return this;
+    }
+
+    public Produto remove() {
+        this.estaAtivo = false;
+        final var agora = InstantUtils.now();
+        this.atualizadoEm = agora;
+        this.removidoEm = agora;
         return this;
     }
 

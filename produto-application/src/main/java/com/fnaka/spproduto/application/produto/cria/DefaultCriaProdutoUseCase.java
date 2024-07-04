@@ -5,7 +5,7 @@ import com.fnaka.spproduto.domain.produto.Produto;
 import com.fnaka.spproduto.application.produto.ProdutoGateway;
 import com.fnaka.spproduto.domain.validation.handler.Notification;
 
-public class DefaultCriaProdutoUseCase extends CriaProdutoUseCase {
+public class DefaultCriaProdutoUseCase implements CriaProdutoUseCase {
 
     private final ProdutoGateway produtoGateway;
 

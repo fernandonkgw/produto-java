@@ -5,7 +5,7 @@ import com.fnaka.spproduto.application.produto.ProdutoGateway;
 
 import java.util.Objects;
 
-public class DefaultListaProdutosUseCase extends ListaProdutosUseCase {
+public class DefaultListaProdutosUseCase implements ListaProdutosUseCase {
 
     private final ProdutoGateway produtoGateway;
 

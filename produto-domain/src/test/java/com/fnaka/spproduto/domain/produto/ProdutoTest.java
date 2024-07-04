@@ -113,4 +113,26 @@ class ProdutoTest {
         }
     }
 
+    @Nested
+    class remove {
+        @Test
+        void givenValidProdutoWHenCallsRemoveShouldUpdateRemovidoEm() {
+            // given
+            final var produto = Produto.newProduto("smartphone", 1_000, true);
+            final var atualizadoEm = produto.getAtualizadoEm();
+
+            // when
+            final var actualProduto = produto.remove();
+
+            // then
+            Assertions.assertNotNull(actualProduto);
+            Assertions.assertFalse(actualProduto.isEstaAtivo());
+            Assertions.assertTrue(atualizadoEm.isBefore(actualProduto.getAtualizadoEm()));
+            Assertions.assertNotNull(actualProduto.getRemovidoEm());
+            Assertions.assertEquals(actualProduto.getAtualizadoEm(), actualProduto.getRemovidoEm().get());
+        }
+
+    }
+
+
 }

@@ -9,7 +9,7 @@ import com.fnaka.spproduto.domain.validation.handler.Notification;
 
 import java.util.Objects;
 
-public class DefaultAtualizaProdutoUseCase extends AtualizaProdutoUseCase {
+public class DefaultAtualizaProdutoUseCase implements AtualizaProdutoUseCase {
 
     private final ProdutoGateway produtoGateway;
 

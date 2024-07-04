@@ -7,7 +7,7 @@ import com.fnaka.spproduto.domain.produto.ProdutoID;
 
 import java.util.Objects;
 
-public class DefaultBuscaProdutoPorIdUseCase extends BuscaProdutoPorIdUseCase {
+public class DefaultBuscaProdutoPorIdUseCase implements BuscaProdutoPorIdUseCase {
 
     private final ProdutoGateway produtoGateway;
 

@@ -1,6 +1,6 @@
 package com.fnaka.spproduto.domain;
 
-public interface Prototype<T> {
+public interface Prototype {
 
-    T clone();
+    Prototype clone();
 }
